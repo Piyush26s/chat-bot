@@ -43,19 +43,24 @@ body {
     margin: 0 auto;
 }
 .header{
-   /* margin-top: 7vh;*/
+    margin-top: 7rem;
     padding: 1rem;
+
+}
+
+body.hide-header .header{
     display: none;
+    margin-top: 0;
 }
 .header :where(.title, .subtitle){
     font-weight: 500;
     line-height: 3.6rem;
 }
-.header .tittle {
-    font-size: 2.7rem;
+.header .title {
+    font-size: 3.8rem;
     width:fit-content;
     background-clip: text;
-    background: linear-gradient(to right,#673AB7,#00BCD4);
+    background: linear-gradient(to right,#4285f4,#d96570);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -64,13 +69,26 @@ body {
     color: var(--subheading-color);
 }
 .suggestion-list {
-    margin-top: 9.5vh;
-    list-style: none;
     display: flex;
-    gap: 1.25rem;
+    gap: 10px;
     overflow-x: auto;
-    scrollbar-width: none;
-}
+    padding: 15px 0;
+    scroll-behavior: smooth;
+  
+    margin-top: 45px;
+    
+    scrollbar-width: thin;
+    -ms-overflow-style: auto;
+  }
+  
+  .suggestion-list::-webkit-scrollbar {
+    height: 6px;
+  }
+  .suggestion-list::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 10px;
+  }
+  
 .suggestion-list .suggestion {
     padding: 1.25rem;
     cursor: pointer;
@@ -139,6 +157,10 @@ body {
 }
 .chat-list .message .text {
     color: var(--text-color);
+}
+
+.chat-list .message .text.error{
+    color: #e55865;
 }
 
 .chat-list .message.loading .text {
@@ -274,4 +296,44 @@ body {
     margin-top: 1rem;
     text-align: center;
     color: var(--placeholder-color);
+}
+
+/* resposne media query code for small screen */
+
+@media (max-width: 768px) {
+    .header :is(.tittle, .subtitle) {
+        font-size: 2rem;
+        line-height: 2.6rem;
+    }
+    
+    .header .subtitle{
+        font-size: 1.7rem;
+    }
+
+    .chat-list .message .avatar{
+        width: 37px;
+        height: 37px;
+    }
+
+    .typing-area :where(.typing-form, .actions-button){
+        gap: 0.4rem;
+    }
+
+    .typing-form .input-wrapper{
+        height: 50px;
+    }
+
+    .typing-form .typing-input{
+        padding: 1.1rem 3.5rem 1.1rem 1.2rem;
+    }
+
+    .typing-area .icon{
+        height: 50px;
+        width:50px;
+    }
+
+    .typing-area .disclaimer-text {
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+    }
 }
