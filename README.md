@@ -3,7 +3,7 @@
 A modern, highly responsive, and aesthetically premium AI Chatbot built with vanilla HTML, CSS, and JavaScript. This project integrates the **Gemini API** to provide intelligent responses with rich text formatting.
 
 ![Project Preview](https://via.placeholder.com/800x400?text=Premium+AI+Chatbot+Preview) 
-*(Note: Replace with actual screenshot)*
+*(screenshot)*
 
 ## ✨ Features
 
