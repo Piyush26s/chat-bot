@@ -20,7 +20,7 @@ const loadLocalstorageData = () => {
     document.body.classList.toggle("light_mode", isLightMode);
     toggleThemeButton.querySelector("span").innerText = isLightMode ? "dark_mode" : "light_mode";
 
-    if(savedChats) {
+    if (savedChats) {
         chatlist.innerHTML = savedChats;
         document.body.classList.add("hide-header");
         chatlist.scrollTo(0, chatlist.scrollHeight);
@@ -61,24 +61,72 @@ const createMessageElement = (content, ...classes) => {
     return div;
 }
 
+// Markdown Configuration
+marked.setOptions({
+    highlight: function (code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            return hljs.highlight(code, { language: lang }).value;
+        }
+        return hljs.highlightAuto(code).value;
+    }
+});
+
+// Typing Effect (Stream-like)
 // Typing Effect (Stream-like)
 const showTypingEffect = (text, textElement, incomingMessageDiv) => {
-    // Parse markdown before showing
-    const markdownHTML = marked.parse(text);
+    // Custom renderer to add copy buttons and Mac-like headers to pre blocks
+    const renderer = new marked.Renderer();
+    renderer.code = (code, language) => {
+        const validLang = !!(language && hljs.getLanguage(language));
+        const highlighted = validLang
+            ? hljs.highlight(code, { language }).value
+            : hljs.highlightAuto(code).value;
+
+        return `
+        <pre>
+            <div class="code-header">
+                <div class="code-controls">
+                    <span class="close-dot"></span>
+                    <span class="min-dot"></span>
+                    <span class="max-dot"></span>
+                </div>
+                <div class="lang-label">${language || 'code'}</div>
+                <button class="copy-btn" onclick="copyCode(this)">
+                    <span class="material-symbols-rounded">content_copy</span>
+                    Copy
+                </button>
+            </div>
+            <code class="hljs ${language || ''}">${highlighted}</code>
+        </pre>`;
+    };
+
+    // Parse markdown
+    const markdownHTML = marked.parse(text, { renderer: renderer });
     textElement.innerHTML = markdownHTML;
-    
-    // Highlight code blocks
-    textElement.querySelectorAll("pre code").forEach(block => {
-        hljs.highlightElement(block);
-    });
 
     isResponseGenerating = false;
     localStorage.setItem("savedChats", chatlist.innerHTML);
     chatlist.scrollTo(0, chatlist.scrollHeight);
-    
-    // Remove loading state (icon)
-    // incomingMessageDiv.querySelector(".icon").classList.remove("hide"); // No icon logic for now, simplify
 }
+
+// Global Copy Code Function
+window.copyCode = (btn) => {
+    const pre = btn.closest('pre');
+    const code = pre.querySelector('code').innerText;
+
+    navigator.clipboard.writeText(code).then(() => {
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = `<span class="material-symbols-rounded">check</span> Copied!`;
+        btn.style.color = "#27c93f"; // Success green
+
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.color = "";
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+};
 
 // Generate API Response
 const generateAPIResponse = async (incomingMessageDiv) => {
@@ -86,10 +134,13 @@ const generateAPIResponse = async (incomingMessageDiv) => {
     const key = getApiKey();
 
     if (!key) {
-        textElement.innerHTML = "<p>API Key is missing. Please set it in settings.</p>";
+        textElement.innerHTML = "<p>⚠️ <strong>API Key is missing.</strong> Please click the key icon <span class='material-symbols-rounded' style='vertical-align: middle; font-size: 1em;'>key</span> in the controls to set it.</p>";
         textElement.classList.add("error");
         isResponseGenerating = false;
         showApiKeyModal();
+        // Remove loading state only
+        const loadingIndicator = incomingMessageDiv.querySelector(".loading-indicator");
+        if (loadingIndicator) loadingIndicator.remove();
         return;
     }
 
@@ -108,16 +159,16 @@ const generateAPIResponse = async (incomingMessageDiv) => {
         });
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error.message);
+        if (!response.ok) throw new Error(data.error.message || "Failed to fetch response");
 
         const apiResponse = data?.candidates[0].content.parts[0].text;
         showTypingEffect(apiResponse, textElement, incomingMessageDiv);
 
     } catch (error) {
         isResponseGenerating = false;
-        textElement.innerHTML = `<p class="error">Error: ${error.message}</p>`;
-    } finally {
-        // incomingMessageDiv.classList.remove("loading"); // Handled by replacing content
+        textElement.innerHTML = `<p class="error">❌ <strong>Error:</strong> ${error.message}</p>`;
+        // Keep the chat scrolling
+        chatlist.scrollTo(0, chatlist.scrollHeight);
     }
 }
 
@@ -161,22 +212,22 @@ const handleOutgoingChat = () => {
     const outgoingMessageDiv = createMessageElement(html, "outgoing");
     outgoingMessageDiv.querySelector(".text").innerText = userMessage;
     chatlist.appendChild(outgoingMessageDiv);
-    
+
     input.value = "";
     input.style.height = "auto"; // Reset height
-    
+
     document.body.classList.add("hide-header");
     chatlist.scrollTo(0, chatlist.scrollHeight);
-    
+
     setTimeout(showLoadingAnimation, 500);
 }
 
 // Auto-resize textarea
 const textarea = typingForm.querySelector(".typing-input");
-textarea.addEventListener('input', function() {
+textarea.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
-    if(this.value === '') this.style.height = 'auto'; 
+    if (this.value === '') this.style.height = 'auto';
 });
 
 // Event Listeners
